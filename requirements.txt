@@ -1,10 +1,10 @@
 streamlit
-whisper
-torch
-sentence-transformers
-chromadb
 groq
+langchain
+langchain-community
+chromadb
+sentence-transformers
+openai-whisper
 edge-tts
+torch
 python-dotenv
-pydub
-ffmpeg-python
