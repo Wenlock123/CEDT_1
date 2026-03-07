@@ -10,7 +10,6 @@ async def generate_audio(text):
 
     await communicate.save("response.mp3")
 
-
 def text_to_speech(text):
 
     asyncio.run(generate_audio(text))
