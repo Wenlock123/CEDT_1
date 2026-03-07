@@ -1,7 +1,11 @@
 import streamlit as st
+from utils.db_utils import extract_chromadb
 from utils.whisper_utils import speech_to_text
 from utils.rag_utils import ask_llm
 from utils.tts_utils import text_to_speech
+
+# Extract ChromaDB if not extracted
+extract_chromadb()
 
 st.set_page_config(
     page_title="Voice RAG Assistant",
