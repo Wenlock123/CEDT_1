@@ -1,9 +1,9 @@
-streamlit
-groq
 langchain
 langchain-community
-chromadb
 sentence-transformers
+chromadb
+groq
+streamlit
 openai-whisper
 edge-tts
 torch
