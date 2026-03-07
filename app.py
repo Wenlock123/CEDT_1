@@ -1,23 +1,23 @@
 import streamlit as st
-import whisper
 import os
 
+from utils.db_utils import extract_chromadb
+from utils.whisper_utils import speech_to_text
 from utils.rag_utils import retrieve_context, ask_llm
-from utils.audio_utils import text_to_speech
+from utils.tts_utils import text_to_speech
+
+# -----------------------------
+# Page Title
+# -----------------------------
 
 st.title("AI Socratic Tutor")
-
 st.write("อัปโหลดไฟล์เสียงเพื่อถามคำถาม")
 
 # -----------------------------
-# Load Whisper Model (Cache)
+# Extract ChromaDB (ครั้งแรก)
 # -----------------------------
 
-@st.cache_resource
-def load_whisper():
-    return whisper.load_model("base")  # เปลี่ยนจาก medium → base
-
-model = load_whisper()
+extract_chromadb()
 
 # -----------------------------
 # Upload Audio
@@ -30,27 +30,25 @@ uploaded_file = st.file_uploader(
 
 if uploaded_file:
 
-    with open("temp_audio.m4a", "wb") as f:
+    # save temp file
+    audio_path = "temp_audio.m4a"
+
+    with open(audio_path, "wb") as f:
         f.write(uploaded_file.read())
 
     st.write("กำลังแปลงเสียงเป็นข้อความ...")
 
     # -----------------------------
-    # Speech → Text
+    # Speech → Text (Whisper)
     # -----------------------------
 
-    result = model.transcribe(
-        "temp_audio.m4a",
-        language="th"
-    )
-
-    question = result["text"]
+    question = speech_to_text(audio_path)
 
     st.subheader("คำถามของผู้ใช้")
     st.write(question)
 
     # -----------------------------
-    # RAG Retrieval
+    # Retrieve Context (RAG)
     # -----------------------------
 
     context = retrieve_context(question)
@@ -68,6 +66,10 @@ if uploaded_file:
     # Text → Speech
     # -----------------------------
 
-    audio_path = text_to_speech(answer)
+    audio_file = text_to_speech(answer)
 
-    st.audio(audio_path)
+    st.audio(audio_file)
+
+    # cleanup temp file
+    if os.path.exists(audio_path):
+        os.remove(audio_path)
