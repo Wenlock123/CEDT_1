@@ -1,0 +1,10 @@
+streamlit
+whisper
+torch
+sentence-transformers
+chromadb
+groq
+edge-tts
+python-dotenv
+pydub
+ffmpeg-python
