@@ -1,45 +1,46 @@
 import streamlit as st
-from utils.db_utils import extract_chromadb
-from utils.whisper_utils import speech_to_text
-from utils.rag_utils import ask_llm
-from utils.tts_utils import text_to_speech
+import whisper
 
-# Extract ChromaDB if not extracted
-extract_chromadb()
+from utils.rag_utils import retrieve_context, ask_llm
+from utils.audio_utils import text_to_speech
 
-st.set_page_config(
-    page_title="Voice RAG Assistant",
-    layout="centered"
+st.title("AI Socratic Tutor")
+
+# โหลด whisper
+model = whisper.load_model("medium")
+
+uploaded_file = st.file_uploader(
+    "Upload Audio",
+    type=["m4a", "wav", "mp3"]
 )
 
-st.title("🎤 Voice RAG AI Assistant")
+if uploaded_file:
 
-uploaded_audio = st.file_uploader(
-    "Upload audio file",
-    type=["wav","mp3","m4a"]
-)
+    with open("temp_audio.m4a", "wb") as f:
+        f.write(uploaded_file.read())
 
-if uploaded_audio is not None:
+    st.write("Transcribing...")
 
-    with open("input_audio.m4a","wb") as f:
-        f.write(uploaded_audio.read())
+    result = model.transcribe(
+        "temp_audio.m4a",
+        language="th"
+    )
 
-    st.info("Transcribing audio...")
+    question = result["text"]
 
-    question = speech_to_text("input_audio.m4a")
-
-    st.write("### User Question")
+    st.write("User Question:")
     st.write(question)
 
-    st.info("Searching knowledge base...")
+    # RAG
+    context = retrieve_context(question)
 
-    answer = ask_llm(question)
+    # LLM
+    answer = ask_llm(question, context)
 
-    st.write("### AI Answer")
+    st.write("AI Tutor:")
     st.write(answer)
 
-    st.info("Generating voice response...")
+    # TTS
+    audio_path = text_to_speech(answer)
 
-    audio_file = text_to_speech(answer)
-
-    st.audio(audio_file)
+    st.audio(audio_path)
