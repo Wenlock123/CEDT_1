@@ -9,8 +9,19 @@ st.title("AI Socratic Tutor")
 
 st.write("อัปโหลดไฟล์เสียงเพื่อถามคำถาม")
 
-# โหลด Whisper
-model = whisper.load_model("medium")
+# -----------------------------
+# Load Whisper Model (Cache)
+# -----------------------------
+
+@st.cache_resource
+def load_whisper():
+    return whisper.load_model("base")  # เปลี่ยนจาก medium → base
+
+model = load_whisper()
+
+# -----------------------------
+# Upload Audio
+# -----------------------------
 
 uploaded_file = st.file_uploader(
     "Upload audio",
@@ -24,6 +35,10 @@ if uploaded_file:
 
     st.write("กำลังแปลงเสียงเป็นข้อความ...")
 
+    # -----------------------------
+    # Speech → Text
+    # -----------------------------
+
     result = model.transcribe(
         "temp_audio.m4a",
         language="th"
@@ -34,24 +49,24 @@ if uploaded_file:
     st.subheader("คำถามของผู้ใช้")
     st.write(question)
 
-    # ----------------
-    # RAG
-    # ----------------
+    # -----------------------------
+    # RAG Retrieval
+    # -----------------------------
 
     context = retrieve_context(question)
 
-    # ----------------
-    # LLM
-    # ----------------
+    # -----------------------------
+    # LLM Response
+    # -----------------------------
 
     answer = ask_llm(question, context)
 
     st.subheader("AI Tutor")
     st.write(answer)
 
-    # ----------------
-    # TTS
-    # ----------------
+    # -----------------------------
+    # Text → Speech
+    # -----------------------------
 
     audio_path = text_to_speech(answer)
 
