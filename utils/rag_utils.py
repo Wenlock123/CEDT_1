@@ -6,12 +6,10 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# embedding model
 embedding_model = SentenceTransformer(
     "paraphrase-multilingual-mpnet-base-v2"
 )
 
-# load chromadb
 chroma_client = chromadb.PersistentClient(
     path="chromadb_database"
 )
@@ -20,11 +18,9 @@ collection = chroma_client.get_collection(
     name="knowledge"
 )
 
-# groq client
 groq_client = Groq(
     api_key=os.getenv("GROQ_API_KEY")
 )
-
 
 def ask_llm(question):
 
@@ -42,20 +38,19 @@ def ask_llm(question):
     prompt = f"""
 You are a helpful AI assistant.
 
-Your task is to answer the user's question using the information from the provided context.
+Use the provided context to answer the user's question.
 
-Guidelines:
-- Use the context as the primary source of information.
+Rules:
+- Use the context as the main information source.
 - Summarize relevant information.
-- Keep the answer concise and clear.
-- Answer in 1-2 sentences.
+- Keep the answer concise.
+- Limit the answer to 1-2 sentences.
 - Focus only on information relevant to the question.
-- Avoid unnecessary details.
 
 Context:
 {context}
 
-User Question:
+Question:
 {question}
 
 Answer in Thai:
