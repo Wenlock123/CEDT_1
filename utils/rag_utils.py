@@ -1,7 +1,14 @@
 from langchain_community.vectorstores import Chroma
 from langchain.embeddings import HuggingFaceEmbeddings
 from groq import Groq
+from dotenv import load_dotenv
 import os
+
+# -------------------------
+# Load environment variables
+# -------------------------
+
+load_dotenv()
 
 # -------------------------
 # Embedding model
@@ -12,18 +19,17 @@ embedding_model = HuggingFaceEmbeddings(
 )
 
 # -------------------------
-# Load ChromaDB
+# Load ChromaDB (โหลดครั้งเดียว)
 # -------------------------
 
-def load_vectorstore():
+vectorstore = Chroma(
+    persist_directory="chroma_db",
+    embedding_function=embedding_model
+)
 
-    vectorstore = Chroma(
-        persist_directory="chroma_db",
-        embedding_function=embedding_model
-    )
-
-    return vectorstore
-
+retriever = vectorstore.as_retriever(
+    search_kwargs={"k": 3}
+)
 
 # -------------------------
 # Retrieve context
@@ -31,13 +37,10 @@ def load_vectorstore():
 
 def retrieve_context(question):
 
-    vectorstore = load_vectorstore()
-
-    retriever = vectorstore.as_retriever(
-        search_kwargs={"k": 3}
-    )
-
     docs = retriever.get_relevant_documents(question)
+
+    if not docs:
+        return ""
 
     context = "\n".join([doc.page_content for doc in docs])
 
@@ -57,33 +60,27 @@ def ask_llm(question, context):
     system_prompt = """
 คุณคือ AI Tutor ที่ใช้ Socratic Method
 
-กฎสำคัญ:
+กฎการตอบ:
 
-1. ใช้วิธี Socratic
+1. ใช้ Socratic method
 - ตั้งคำถามชวนคิด
-- ไม่เฉลยทันที
-- ช่วยให้ผู้เรียนคิดเอง
+- ไม่เฉลยตรง ๆ
+- ให้ผู้เรียนคิดต่อ
 
 2. ถ้ามีข้อมูลจาก Context
-- ใช้ข้อมูลนั้นตอบ
-- จำกัดคำตอบ 1-2 ประโยค
+- ใช้ข้อมูลนั้นเป็นพื้นฐาน
 
-3. รูปแบบคำตอบที่ต้องการ
-- ตั้งคำถามชวนคิด
+3. จำกัดคำตอบให้สั้น
+ไม่เกิน 1-2 ประโยค
+
+4. รูปแบบคำตอบ
+- คำถามชวนคิด
 หรือ
-- ให้ Hint สั้น ๆ
+- hint สั้น ๆ
 
-4. ห้ามอธิบายยาว
+5. ห้ามอธิบายยาว
 
-5. ใช้ภาษาไทย
-
-ตัวอย่างคำตอบที่ดี:
-
-ถ้าเซลล์พืชสร้างอาหารเอง คุณคิดว่าโครงสร้างใดในเซลล์ที่เกี่ยวข้องกับการใช้พลังงานจากแสง?
-
-หรือ
-
-ใน context มีโครงสร้างที่เกี่ยวกับการสังเคราะห์แสง คุณจำได้ไหมว่ามันชื่ออะไร?
+6. ใช้ภาษาไทย
 """
 
     user_prompt = f"""
@@ -94,7 +91,7 @@ Context จากฐานข้อมูล:
 คำถามของผู้เรียน:
 {question}
 
-ตอบโดยใช้ Socratic method และจำกัด 1-2 ประโยค
+ตอบโดยใช้ Socratic method และจำกัดคำตอบไม่เกิน 1-2 ประโยค
 """
 
     response = client.chat.completions.create(
