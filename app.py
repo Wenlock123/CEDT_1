@@ -1,75 +1,85 @@
 import streamlit as st
-import os
-
-from utils.db_utils import extract_chromadb
-from utils.whisper_utils import speech_to_text
 from utils.rag_utils import retrieve_context, ask_llm
-from utils.tts_utils import text_to_speech
 
-# -----------------------------
-# Page Title
-# -----------------------------
+st.title("Just Talk AI Tutor")
 
-st.title("AI Socratic Tutor")
-st.write("อัปโหลดไฟล์เสียงเพื่อถามคำถาม")
+st.write("ใส่หัวข้อที่อยากเรียน แล้วคุยกับ AI")
 
-# -----------------------------
-# Extract ChromaDB (ครั้งแรก)
-# -----------------------------
+# -------------------------
+# Session memory
+# -------------------------
 
-extract_chromadb()
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []
 
-# -----------------------------
-# Upload Audio
-# -----------------------------
+if "topic" not in st.session_state:
+    st.session_state.topic = None
 
-uploaded_file = st.file_uploader(
-    "Upload audio",
-    type=["m4a", "wav", "mp3"]
-)
+if "context" not in st.session_state:
+    st.session_state.context = None
 
-if uploaded_file:
 
-    # save temp file
-    audio_path = "temp_audio.m4a"
+# -------------------------
+# Topic input
+# -------------------------
 
-    with open(audio_path, "wb") as f:
-        f.write(uploaded_file.read())
+topic = st.text_input("Topic ที่อยากเรียน")
 
-    st.write("กำลังแปลงเสียงเป็นข้อความ...")
+if topic and st.session_state.topic is None:
 
-    # -----------------------------
-    # Speech → Text (Whisper)
-    # -----------------------------
+    st.session_state.topic = topic
 
-    question = speech_to_text(audio_path)
+    # RAG
+    context = retrieve_context(topic)
+    st.session_state.context = context
 
-    st.subheader("คำถามของผู้ใช้")
-    st.write(question)
+    answer = ask_llm(
+        topic,
+        topic,
+        context,
+        st.session_state.chat_history
+    )
 
-    # -----------------------------
-    # Retrieve Context (RAG)
-    # -----------------------------
+    st.session_state.chat_history.append({
+        "role": "assistant",
+        "content": answer
+    })
 
-    context = retrieve_context(question)
+# -------------------------
+# Display chat
+# -------------------------
 
-    # -----------------------------
-    # LLM Response
-    # -----------------------------
+for msg in st.session_state.chat_history:
 
-    answer = ask_llm(question, context)
+    if msg["role"] == "assistant":
+        st.chat_message("assistant").write(msg["content"])
+    else:
+        st.chat_message("user").write(msg["content"])
 
-    st.subheader("AI Tutor")
-    st.write(answer)
 
-    # -----------------------------
-    # Text → Speech
-    # -----------------------------
+# -------------------------
+# User chat input
+# -------------------------
 
-    audio_file = text_to_speech(answer)
+user_input = st.chat_input("ตอบคำถาม หรือพิมพ์ 'สิ้นสุด'")
 
-    st.audio(audio_file)
+if user_input:
 
-    # cleanup temp file
-    if os.path.exists(audio_path):
-        os.remove(audio_path)
+    st.session_state.chat_history.append({
+        "role": "user",
+        "content": user_input
+    })
+
+    answer = ask_llm(
+        st.session_state.topic,
+        user_input,
+        st.session_state.context,
+        st.session_state.chat_history
+    )
+
+    st.session_state.chat_history.append({
+        "role": "assistant",
+        "content": answer
+    })
+
+    st.rerun()
