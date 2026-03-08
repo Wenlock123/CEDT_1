@@ -4,10 +4,6 @@ from groq import Groq
 from dotenv import load_dotenv
 import os
 
-# -------------------------
-# Load environment variables
-# -------------------------
-
 load_dotenv()
 
 # -------------------------
@@ -19,7 +15,7 @@ embedding_model = HuggingFaceEmbeddings(
 )
 
 # -------------------------
-# Load ChromaDB (โหลดครั้งเดียว)
+# Load ChromaDB
 # -------------------------
 
 vectorstore = Chroma(
@@ -35,9 +31,9 @@ retriever = vectorstore.as_retriever(
 # Retrieve context
 # -------------------------
 
-def retrieve_context(question):
+def retrieve_context(topic):
 
-    docs = retriever.invoke(question)
+    docs = retriever.invoke(topic)
 
     if not docs:
         return ""
@@ -48,61 +44,63 @@ def retrieve_context(question):
 
 
 # -------------------------
-# LLM (Groq)
+# LLM Conversation
 # -------------------------
 
-def ask_llm(question, context):
+def ask_llm(topic, user_input, context, chat_history):
 
     client = Groq(
         api_key=os.getenv("GROQ_API_KEY")
     )
 
     system_prompt = """
-คุณคือ AI Tutor ที่ใช้ Socratic Method
+คุณคือ AI Just Talk Tutor
 
-กฎการตอบ:
+เป้าหมาย:
+- สอนด้วย Socratic Method
+- ถามคำถามชวนคิด
+- ไม่เฉลยทันที
 
-1. ใช้ Socratic method
-- ตั้งคำถามชวนคิด
-- ไม่เฉลยตรง ๆ
-- ให้ผู้เรียนคิดต่อ
+กฎ:
 
-2. ถ้ามีข้อมูลจาก Context
-- ใช้ข้อมูลนั้นเป็นพื้นฐาน
+1. ถ้า user เพิ่งเริ่ม topic
+ให้ถามคำถามแรกเกี่ยวกับ topic
 
-3. จำกัดคำตอบให้สั้น
-ไม่เกิน 1-2 ประโยค
+2. ถ้า user ตอบ
+ให้ถามคำถามต่อเพื่อให้คิดลึกขึ้น
 
-4. รูปแบบคำตอบ
-- คำถามชวนคิด
-หรือ
-- hint สั้น ๆ
+3. ถ้า user พิมพ์ "สิ้นสุด"
+ให้ทำ 2 อย่าง
+- สร้าง Quiz 1 ข้อ
+- สรุปบทเรียนสั้น ๆ
 
-5. ห้ามอธิบายยาว
+4. ใช้ภาษาไทย
 
-6. ใช้ภาษาไทย
+5. คำตอบสั้น
+1-2 ประโยค
 """
 
-    user_prompt = f"""
-Context จากฐานข้อมูล:
+    messages = [{"role": "system", "content": system_prompt}]
 
-{context}
+    # ใส่ context จาก RAG
+    messages.append({
+        "role": "system",
+        "content": f"Context:\n{context}"
+    })
 
-คำถามของผู้เรียน:
-{question}
+    # ใส่ chat history
+    for msg in chat_history:
+        messages.append(msg)
 
-ตอบโดยใช้ Socratic method และจำกัดคำตอบไม่เกิน 1-2 ประโยค
-"""
+    # ใส่ user input
+    messages.append({
+        "role": "user",
+        "content": user_input
+    })
 
     response = client.chat.completions.create(
-
         model="meta-llama/llama-4-scout-17b-16e-instruct",
-
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt}
-        ],
-
+        messages=messages,
         temperature=0.4
     )
 
