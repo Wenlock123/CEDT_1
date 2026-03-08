@@ -37,7 +37,7 @@ retriever = vectorstore.as_retriever(
 
 def retrieve_context(question):
 
-    docs = retriever.get_relevant_documents(question)
+    docs = retriever.invoke(question)
 
     if not docs:
         return ""
