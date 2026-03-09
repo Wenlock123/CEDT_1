@@ -5,23 +5,18 @@ from utils.rag_utils import retrieve_context, ask_llm
 from utils.whisper_utils import speech_to_text
 from utils.tts_utils import text_to_speech
 
-st.title("🎙️ Just Talk AI Tutor")
 
-st.write("ใส่หัวข้อที่อยากเรียน แล้วคุยกับ AI ด้วยเสียง")
-
+st.title("🎓 AI Socratic Tutor")
 
 # -------------------------
-# Session memory
+# Session state
 # -------------------------
 
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
-if "topic" not in st.session_state:
-    st.session_state.topic = None
-
-if "context" not in st.session_state:
-    st.session_state.context = None
+if "topic_started" not in st.session_state:
+    st.session_state.topic_started = False
 
 
 # -------------------------
@@ -30,25 +25,22 @@ if "context" not in st.session_state:
 
 topic = st.text_input("Topic ที่อยากเรียน")
 
-if topic and st.session_state.topic is None:
+if topic and not st.session_state.topic_started:
 
-    st.session_state.topic = topic
-
-    # RAG
     context = retrieve_context(topic)
-    st.session_state.context = context
 
-    answer = ask_llm(
+    first_question = ask_llm(
         topic,
-        "เริ่มต้นบทสนทนา",
+        f"เริ่มสอนหัวข้อนี้: {topic}",
         context,
-        st.session_state.chat_history
+        []
     )
 
-    st.session_state.chat_history.append({
-        "role": "assistant",
-        "content": answer
-    })
+    st.session_state.chat_history.append(
+        {"role": "assistant", "content": first_question}
+    )
+
+    st.session_state.topic_started = True
 
 
 # -------------------------
@@ -57,17 +49,11 @@ if topic and st.session_state.topic is None:
 
 for msg in st.session_state.chat_history:
 
-    if msg["role"] == "assistant":
-
-        st.chat_message("assistant").write(msg["content"])
-
-        # AI พูด
-        audio = text_to_speech(msg["content"])
-        st.audio(audio)
-
-    else:
-
+    if msg["role"] == "user":
         st.chat_message("user").write(msg["content"])
+
+    if msg["role"] == "assistant":
+        st.chat_message("assistant").write(msg["content"])
 
 
 # -------------------------
@@ -75,34 +61,36 @@ for msg in st.session_state.chat_history:
 # -------------------------
 
 audio = mic_recorder(
-    start_prompt="🎤 กดเพื่อพูด",
-    stop_prompt="⏹️ หยุด",
-    just_once=True
+    start_prompt="🎤 พูด",
+    stop_prompt="หยุด",
+    key="recorder"
 )
-
 
 if audio:
 
-    with open("input.wav", "wb") as f:
-        f.write(audio["bytes"])
+    user_text = speech_to_text(audio["bytes"])
 
-    user_text = speech_to_text("input.wav")
+    st.chat_message("user").write(user_text)
 
-    st.session_state.chat_history.append({
-        "role": "user",
-        "content": user_text
-    })
+    st.session_state.chat_history.append(
+        {"role": "user", "content": user_text}
+    )
+
+    context = retrieve_context(topic)
 
     answer = ask_llm(
-        st.session_state.topic,
+        topic,
         user_text,
-        st.session_state.context,
+        context,
         st.session_state.chat_history
     )
 
-    st.session_state.chat_history.append({
-        "role": "assistant",
-        "content": answer
-    })
+    st.chat_message("assistant").write(answer)
 
-    st.rerun()
+    st.session_state.chat_history.append(
+        {"role": "assistant", "content": answer}
+    )
+
+    audio_response = text_to_speech(answer)
+
+    st.audio(audio_response, format="audio/mp3")
