@@ -1,9 +1,14 @@
 import streamlit as st
+from streamlit_mic_recorder import mic_recorder
+
 from utils.rag_utils import retrieve_context, ask_llm
+from utils.audio_utils import speech_to_text, text_to_speech
 
-st.title("Just Talk AI Tutor")
 
-st.write("ใส่หัวข้อที่อยากเรียน แล้วคุยกับ AI")
+st.title("🎙️ Just Talk AI Tutor")
+
+st.write("ใส่หัวข้อที่อยากเรียน แล้วคุยกับ AI ด้วยเสียง")
+
 
 # -------------------------
 # Session memory
@@ -35,7 +40,7 @@ if topic and st.session_state.topic is None:
 
     answer = ask_llm(
         topic,
-        topic,
+        "เริ่มต้นบทสนทนา",
         context,
         st.session_state.chat_history
     )
@@ -45,6 +50,7 @@ if topic and st.session_state.topic is None:
         "content": answer
     })
 
+
 # -------------------------
 # Display chat
 # -------------------------
@@ -52,27 +58,44 @@ if topic and st.session_state.topic is None:
 for msg in st.session_state.chat_history:
 
     if msg["role"] == "assistant":
+
         st.chat_message("assistant").write(msg["content"])
+
+        # AI พูด
+        audio = text_to_speech(msg["content"])
+        st.audio(audio)
+
     else:
+
         st.chat_message("user").write(msg["content"])
 
 
 # -------------------------
-# User chat input
+# Voice input
 # -------------------------
 
-user_input = st.chat_input("ตอบคำถาม หรือพิมพ์ 'สิ้นสุด'")
+audio = mic_recorder(
+    start_prompt="🎤 กดเพื่อพูด",
+    stop_prompt="⏹️ หยุด",
+    just_once=True
+)
 
-if user_input:
+
+if audio:
+
+    with open("input.wav", "wb") as f:
+        f.write(audio["bytes"])
+
+    user_text = speech_to_text("input.wav")
 
     st.session_state.chat_history.append({
         "role": "user",
-        "content": user_input
+        "content": user_text
     })
 
     answer = ask_llm(
         st.session_state.topic,
-        user_input,
+        user_text,
         st.session_state.context,
         st.session_state.chat_history
     )
