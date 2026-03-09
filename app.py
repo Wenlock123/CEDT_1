@@ -2,8 +2,8 @@ import streamlit as st
 from streamlit_mic_recorder import mic_recorder
 
 from utils.rag_utils import retrieve_context, ask_llm
-from utils.audio_utils import speech_to_text, text_to_speech
-
+from utils.whisper_utils import speech_to_text
+from utils.tts_utils import text_to_speech
 
 st.title("🎙️ Just Talk AI Tutor")
 
