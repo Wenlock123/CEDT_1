@@ -5,7 +5,6 @@ from utils.rag_utils import retrieve_context, ask_llm
 from utils.whisper_utils import speech_to_text
 from utils.tts_utils import text_to_speech
 
-
 st.title("🎓 AI Socratic Tutor")
 
 # -------------------------
@@ -17,6 +16,10 @@ if "chat_history" not in st.session_state:
 
 if "topic_started" not in st.session_state:
     st.session_state.topic_started = False
+
+# ใช้ reset mic
+if "mic_key" not in st.session_state:
+    st.session_state.mic_key = 0
 
 
 # -------------------------
@@ -61,16 +64,14 @@ for msg in st.session_state.chat_history:
 # -------------------------
 
 audio = mic_recorder(
-    start_prompt="🎤 พูด",
-    stop_prompt="หยุด",
-    key="recorder"
+    start_prompt="🎤 กดเพื่อพูด",
+    stop_prompt="⏹️ หยุด",
+    key=f"mic_{st.session_state.mic_key}"
 )
 
-if audio:
+if audio and "bytes" in audio:
 
     user_text = speech_to_text(audio["bytes"])
-
-    st.chat_message("user").write(user_text)
 
     st.session_state.chat_history.append(
         {"role": "user", "content": user_text}
@@ -85,12 +86,15 @@ if audio:
         st.session_state.chat_history
     )
 
-    st.chat_message("assistant").write(answer)
-
     st.session_state.chat_history.append(
         {"role": "assistant", "content": answer}
     )
 
+    # เล่นเสียงตอบ
     audio_response = text_to_speech(answer)
-
     st.audio(audio_response, format="audio/mp3")
+
+    # reset mic
+    st.session_state.mic_key += 1
+
+    st.rerun()
