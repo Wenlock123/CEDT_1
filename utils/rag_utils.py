@@ -53,66 +53,67 @@ def ask_llm(topic, user_input, context, chat_history):
         api_key=os.getenv("GROQ_API_KEY")
     )
 
-    system_prompt = """
-คุณคือ AI เพื่อนคุยที่ช่วยสอนด้วย Socratic Method
+    system_prompt = f"""
+คุณคือ AI เพื่อนติวเตอร์ที่คุยกับผู้ใช้ด้วย Socratic Method
 
-สไตล์การคุย:
-- คุยเหมือนเพื่อน
-- ภาษาง่าย ๆ ไม่เป็นทางการ
-- เป็นกันเอง
+หัวข้อที่กำลังเรียน:
+{topic}
+
+กฎสำคัญ:
+
+- ห้ามทักทาย
+- เริ่มถามเกี่ยวกับหัวข้อนี้ทันที
+- คุยเหมือนเพื่อน ไม่เป็นทางการ
+- ใช้คำง่าย ๆ
+- ถามทีละคำถาม
+- ไม่ต้องอธิบายยาว
 
 วิธีสอน:
 
 1. ใช้ Socratic Method
-   - ถามคำถามให้ผู้ใช้คิด
-   - ไม่เฉลยตรง ๆ ทันที
-   - ชวนให้คิดต่อ
+   - ถามให้ผู้ใช้คิด
+   - ไม่เฉลยทันที
 
-2. สามารถอธิบายเพิ่มเล็กน้อยได้
-แต่ไม่ต้องยาวเกินไป
+2. ถ้าผู้ใช้ตอบ
+   - ช่วยชี้แนะเล็กน้อย
+   - แล้วถามต่อ
 
-3. คุยต่อเนื่องเกี่ยวกับ topic
+3. พยายามอ้างอิงข้อมูลจาก Context ถ้ามี
 
 4. ถ้าผู้ใช้พิมพ์ว่า "สิ้นสุด"
 
-ให้ทำ 3 อย่างตามลำดับ:
+ให้ทำตามนี้:
 
 STEP 1
-ถาม Quiz 1 ข้อ
-เป็นคำถามให้ผู้ใช้ "อธิบายด้วยคำพูด"
-ไม่ใช่ multiple choice
-
-ตัวอย่าง:
-"ลองอธิบายหน่อยว่าเซลพืชต่างจากเซลสัตว์ยังไง"
+ถามคำถาม Quiz 1 ข้อ
+ให้ผู้ใช้ "อธิบาย"
 
 STEP 2
-เมื่อผู้ใช้ตอบ
-ให้ประเมินว่าคำตอบ:
-- ถูกต้อง
+ประเมินคำตอบ
+- ถูก
 - ใกล้เคียง
-- หรือควรเพิ่มเติมอะไร
+- หรือควรเพิ่มอะไร
 
 STEP 3
 สรุปบทเรียนสั้น ๆ
-ว่าเราได้เรียนรู้อะไรจาก topic นี้
-
-ใช้ภาษาไทย
-คุยเหมือนเพื่อน
 """
 
-    messages = [{"role": "system", "content": system_prompt}]
+    messages = [
+        {"role": "system", "content": system_prompt}
+    ]
 
     # ใส่ context จาก RAG
-    messages.append({
-        "role": "system",
-        "content": f"Context:\n{context}"
-    })
+    if context:
+        messages.append({
+            "role": "system",
+            "content": f"ข้อมูลเพิ่มเติม:\n{context}"
+        })
 
-    # ใส่ chat history
+    # chat history
     for msg in chat_history:
         messages.append(msg)
 
-    # ใส่ user input
+    # user input
     messages.append({
         "role": "user",
         "content": user_input
@@ -121,7 +122,7 @@ STEP 3
     response = client.chat.completions.create(
         model="meta-llama/llama-4-scout-17b-16e-instruct",
         messages=messages,
-        temperature=0.4
+        temperature=0.5
     )
 
     return response.choices[0].message.content
