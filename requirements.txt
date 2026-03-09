@@ -8,3 +8,4 @@ openai-whisper
 edge-tts
 torch
 python-dotenv
+streamlit-mic-recorder
