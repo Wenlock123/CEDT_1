@@ -23,11 +23,26 @@ if "mic_key" not in st.session_state:
 if "last_audio" not in st.session_state:
     st.session_state.last_audio = None
 
+
 # -------------------------
 # Script conversation
 # -------------------------
 
-script = [
+script_user = [
+
+"เราพยายามท่องจำว่าความแตกต่างระหว่างเซลล์พืชกับเซลล์สัตว์ แต่ก็ลืมตลอดเลย",
+
+"ก็เดินไปหาของกิน หรือวิ่งหลบแดด",
+
+"อ๋อ คลอโรพลาสต์ เอาไว้สังเคราะห์ด้วยแสง",
+
+"ผนังเซลล์แน่เลย",
+
+"สรุปคือ เซลล์พืชมีผนังเซลล์กับคลอโรพลาสต์ แต่เซลล์สัตว์ไม่มี เพราะสัตว์เคลื่อนที่ไปหาอาหารเองได้"
+
+]
+
+script_bot = [
 
 "ถ้าท่องจำอย่างเดียวมันลืมง่าย ลองคิดจากวิถีชีวิตของมันดีกว่า ปกติเวลาสัตว์หิวหรือร้อนมากๆ มันทำยังไง",
 
@@ -42,38 +57,12 @@ script = [
 ]
 
 # -------------------------
-# Topic input
-# -------------------------
-
-topic = st.text_input("Topic ที่อยากคุย")
-
-if topic and st.session_state.step == 0:
-
-    st.session_state.chat_history.append(
-        {"role": "user", "content": topic}
-    )
-
-    first_answer = script[0]
-
-    st.session_state.chat_history.append(
-        {"role": "assistant", "content": first_answer}
-    )
-
-    st.session_state.last_audio = text_to_speech(first_answer)
-
-    st.session_state.step = 1
-
-# -------------------------
 # Display chat
 # -------------------------
 
 for msg in st.session_state.chat_history:
+    st.chat_message(msg["role"]).write(msg["content"])
 
-    if msg["role"] == "user":
-        st.chat_message("user").write(msg["content"])
-
-    if msg["role"] == "assistant":
-        st.chat_message("assistant").write(msg["content"])
 
 # -------------------------
 # Play voice
@@ -82,6 +71,7 @@ for msg in st.session_state.chat_history:
 if st.session_state.last_audio:
     st.audio(st.session_state.last_audio, format="audio/mp3")
     st.session_state.last_audio = None
+
 
 # -------------------------
 # Voice input
@@ -95,21 +85,27 @@ audio = mic_recorder(
 
 if audio and "bytes" in audio:
 
+    # รับเสียง (ใช้แค่ trigger)
     user_text = speech_to_text(audio["bytes"])
 
-    st.session_state.chat_history.append(
-        {"role": "user", "content": user_text}
-    )
+    if st.session_state.step < len(script_user):
 
-    if st.session_state.step < len(script):
-
-        answer = script[st.session_state.step]
+        # user จาก script
+        user_script = script_user[st.session_state.step]
 
         st.session_state.chat_history.append(
-            {"role": "assistant", "content": answer}
+            {"role": "user", "content": user_script}
         )
 
-        st.session_state.last_audio = text_to_speech(answer)
+        # bot จาก script
+        bot_script = script_bot[st.session_state.step]
+
+        st.session_state.chat_history.append(
+            {"role": "assistant", "content": bot_script}
+        )
+
+        # เสียง bot
+        st.session_state.last_audio = text_to_speech(bot_script)
 
         st.session_state.step += 1
 
