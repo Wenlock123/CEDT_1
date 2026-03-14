@@ -63,13 +63,26 @@ st.markdown("""
     font-size:16px;
 }
 
-/* mic button fixed bottom center */
-.mic-container{
+/* mic wrapper bottom center */
+.mic-wrapper{
     position:fixed;
-    bottom:40px;
+    bottom:30px;
     left:50%;
     transform:translateX(-50%);
     z-index:999;
+}
+
+/* mic circle */
+.mic-circle{
+    background:#f5c233;
+    width:70px;
+    height:70px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    box-shadow:0 6px 15px rgba(0,0,0,0.2);
+    font-size:28px;
 }
 
 </style>
@@ -97,7 +110,6 @@ if "mic_key" not in st.session_state:
 if "last_audio" not in st.session_state:
     st.session_state.last_audio = None
 
-
 # -------------------------
 # Script conversation
 # -------------------------
@@ -119,7 +131,6 @@ script_bot = [
 "วิเคราะห์ได้ขาดมากอี้! สรุปสั้นๆ วันนี้ที่เราคุยกันคือ พืชเน้นระบบพึ่งพาตัวเองด้วยคลอโรพลาสต์ และผนังเซลล์ ส่วนสัตว์เน้นความยืดหยุ่นและการเคลื่อนที่"
 ]
 
-
 # -------------------------
 # Display chat
 # -------------------------
@@ -137,7 +148,6 @@ for msg in st.session_state.chat_history:
             unsafe_allow_html=True
         )
 
-
 # -------------------------
 # Play voice
 # -------------------------
@@ -145,14 +155,13 @@ if st.session_state.last_audio:
     st.audio(st.session_state.last_audio, format="audio/mp3")
     st.session_state.last_audio = None
 
-
 st.markdown('</div>', unsafe_allow_html=True)
 
-
 # -------------------------
-# Mic button (bottom center)
+# Mic button
 # -------------------------
-st.markdown('<div class="mic-container">', unsafe_allow_html=True)
+st.markdown('<div class="mic-wrapper">', unsafe_allow_html=True)
+st.markdown('<div class="mic-circle">', unsafe_allow_html=True)
 
 audio = mic_recorder(
     start_prompt="🎤",
@@ -161,7 +170,7 @@ audio = mic_recorder(
 )
 
 st.markdown('</div>', unsafe_allow_html=True)
-
+st.markdown('</div>', unsafe_allow_html=True)
 
 # -------------------------
 # Logic
