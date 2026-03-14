@@ -36,7 +36,7 @@ st.markdown("""
     background:white;
     border-radius:20px;
     padding:30px;
-    padding-bottom:120px;
+    padding-bottom:140px;
     box-shadow:0 10px 25px rgba(0,0,0,0.08);
 }
 
@@ -63,26 +63,20 @@ st.markdown("""
     font-size:16px;
 }
 
-/* mic wrapper bottom center */
+/* mic area bottom center */
 .mic-wrapper{
     position:fixed;
-    bottom:30px;
+    bottom:35px;
     left:50%;
     transform:translateX(-50%);
     z-index:999;
 }
 
-/* mic circle */
-.mic-circle{
-    background:#f5c233;
-    width:70px;
-    height:70px;
-    border-radius:50%;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    box-shadow:0 6px 15px rgba(0,0,0,0.2);
-    font-size:28px;
+/* hide default mic button */
+button[kind="secondary"]{
+    background:transparent !important;
+    border:none !important;
+    font-size:32px !important;
 }
 
 </style>
@@ -109,6 +103,7 @@ if "mic_key" not in st.session_state:
 
 if "last_audio" not in st.session_state:
     st.session_state.last_audio = None
+
 
 # -------------------------
 # Script conversation
@@ -158,10 +153,9 @@ if st.session_state.last_audio:
 st.markdown('</div>', unsafe_allow_html=True)
 
 # -------------------------
-# Mic button
+# Mic button bottom
 # -------------------------
 st.markdown('<div class="mic-wrapper">', unsafe_allow_html=True)
-st.markdown('<div class="mic-circle">', unsafe_allow_html=True)
 
 audio = mic_recorder(
     start_prompt="🎤",
@@ -169,7 +163,6 @@ audio = mic_recorder(
     key=f"mic_{st.session_state.mic_key}"
 )
 
-st.markdown('</div>', unsafe_allow_html=True)
 st.markdown('</div>', unsafe_allow_html=True)
 
 # -------------------------
