@@ -4,10 +4,6 @@ from streamlit_mic_recorder import mic_recorder
 from utils.whisper_utils import speech_to_text
 from utils.tts_utils import text_to_speech
 
-# -------------------------
-# Page config
-# -------------------------
-
 st.set_page_config(
     page_title="Just Talk",
     page_icon="🎤",
@@ -25,7 +21,7 @@ st.markdown("""
     background-color:#f4f6fb;
 }
 
-/* title */
+/* Title */
 .title{
     text-align:center;
     font-size:42px;
@@ -34,15 +30,17 @@ st.markdown("""
     margin-bottom:20px;
 }
 
-/* chat container */
+/* Chat container */
 .chat-card{
     background:white;
     border-radius:20px;
     padding:30px;
     box-shadow:0 10px 25px rgba(0,0,0,0.08);
+    height:65vh;
+    overflow-y:auto;
 }
 
-/* user bubble */
+/* User bubble */
 .user-bubble{
     background:#2f63b5;
     color:white;
@@ -54,7 +52,7 @@ st.markdown("""
     font-size:16px;
 }
 
-/* bot bubble */
+/* Bot bubble */
 .bot-bubble{
     background:#d9d9de;
     color:black;
@@ -65,11 +63,17 @@ st.markdown("""
     font-size:16px;
 }
 
-/* mic center */
-.mic-container{
-    display:flex;
-    justify-content:center;
-    margin-top:30px;
+/* Floating mic */
+.mic-fixed{
+    position:fixed;
+    bottom:40px;
+    left:50%;
+    transform:translateX(-50%);
+    background:#ffd23f;
+    border-radius:50%;
+    padding:18px;
+    box-shadow:0 8px 20px rgba(0,0,0,0.2);
+    z-index:999;
 }
 
 </style>
@@ -81,9 +85,6 @@ st.markdown("""
 # -------------------------
 
 st.markdown('<div class="title">Just Talk</div>', unsafe_allow_html=True)
-
-st.markdown('<div class="chat-card">', unsafe_allow_html=True)
-
 
 # -------------------------
 # Session state
@@ -110,24 +111,26 @@ script_user = [
     "เราพยายามจำความต่างเซลล์พืชกับเซลล์สัตว์ แต่ลืมตลอดเลย",
     "แผงโซลาร์ ถ้าในเซลล์ก็คือ คลอโรพลาสต์ ใช่ไหม แต่ถ้าสัตว์ไม่มีคลอโรพลาสต์ แล้วสัตว์เอาพลังงานจากไหนมาขยายขนาดร่างกายล่ะ",
     "ต้องเป็นผนังเซลล์แน่เลย แล้วถ้าสัตว์มีผนังเซลล์บ้างล่ะ มันจะช่วยให้เราแข็งแกร่งขึ้นไหม",
-    "ไม่ไหวแน่ ขยับตัวลำบาก วิ่งไปหาทรัพยากรใหม่ๆ ไม่ได้ สรุปคือพืชยอมแข็งเพื่อผลิตเอง ส่วนสัตว์เลือกยืดหยุ่นเพื่อออกไปหาของกิน แบบนี้ถูกมั้ย",
+    "ไม่ไหวแน่ ขยับตัวลำบาก วิ่งไปหาทรัพยากรใหม่ๆ ไม่ได้",
     "ก็คงตั้งตรงไม่ได้ แล้วถล่มลงมาเพราะรับน้ำหนักตัวเองไม่ไหว",
-    "เราว่ามันคงแปลกมาก เพราะถ้ามันมีคลอโรพลาสต์แต่วิ่งเร็วด้วย มันน่าจะเป็นระบบที่ใช้พลังงานสูงมาก"
+    "เราว่ามันคงแปลกมาก เพราะถ้ามันมีคลอโรพลาสต์แต่วิ่งเร็วด้วย"
 ]
 
 script_bot = [
     "เพราะมัวแต่จำชื่อหรือเปล่าอี้ ลองใช้แนวคิดแบบการสร้างธุรกิจดูนะ ถ้าพืชเป็นโรงงานที่ย้ายไปไหนไม่ได้เลย มันต้องมีอุปกรณ์ตัวไหนไว้ดึงพลังงานจากแดดมาสร้างอาหารเอง",
     "เป็นคำถามที่ดี ในเมื่อสัตว์ไม่มีเครื่องผลิตพลังงานในตัว สัตว์เลยต้องใช้ระบบนำเข้า หรือการกินสิ่งมีชีวิตอื่นเข้าไปแทน",
     "แข็งแกร่งขึ้นแน่ แต่มันจะติดปัญหาใหญ่เรื่องความคล่องตัว",
-    "ถูกแล้วอี้ เพราะมีผนังเซลล์ เซลล์พืชเลยเป็นเหลี่ยมแข็งแรง ส่วนเซลล์สัตว์จะมนและยืดหยุ่นกว่า",
+    "ถูกแล้วอี้ เพราะมีผนังเซลล์ เซลล์พืชเลยเป็นเหลี่ยมแข็งแรง",
     "ดีมากอี้ ถ้างั้นก่อนแยกย้ายกันไป ลองทดสอบความเข้าใจสั้นๆ หน่อยนะ",
-    "วิเคราะห์ได้ขาดมากอี้! สรุปสั้นๆ วันนี้ที่เราคุยกันคือ พืชเน้นระบบพึ่งพาตัวเองด้วยคลอโรพลาสต์ และผนังเซลล์ ส่วนสัตว์เน้นความยืดหยุ่นและการเคลื่อนที่"
+    "วิเคราะห์ได้ขาดมากอี้! สรุปสั้นๆ วันนี้ที่เราคุยกันคือ พืชเน้นระบบพึ่งพาตัวเองด้วยคลอโรพลาสต์ และผนังเซลล์"
 ]
 
 
 # -------------------------
-# Display chat
+# Chat UI
 # -------------------------
+
+st.markdown('<div class="chat-card">', unsafe_allow_html=True)
 
 for msg in st.session_state.chat_history:
 
@@ -142,6 +145,8 @@ for msg in st.session_state.chat_history:
             unsafe_allow_html=True
         )
 
+st.markdown('</div>', unsafe_allow_html=True)
+
 
 # -------------------------
 # Play voice
@@ -152,14 +157,11 @@ if st.session_state.last_audio:
     st.session_state.last_audio = None
 
 
-st.markdown('</div>', unsafe_allow_html=True)
-
-
 # -------------------------
-# Mic button
+# Floating mic
 # -------------------------
 
-st.markdown('<div class="mic-container">', unsafe_allow_html=True)
+st.markdown('<div class="mic-fixed">', unsafe_allow_html=True)
 
 audio = mic_recorder(
     start_prompt="🎤",
