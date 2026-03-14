@@ -4,8 +4,86 @@ from streamlit_mic_recorder import mic_recorder
 from utils.whisper_utils import speech_to_text
 from utils.tts_utils import text_to_speech
 
-st.title("🎤 Just Talk")
-st.caption("Talk and think together")
+# -------------------------
+# Page config
+# -------------------------
+
+st.set_page_config(
+    page_title="Just Talk",
+    page_icon="🎤",
+    layout="centered"
+)
+
+# -------------------------
+# Custom CSS
+# -------------------------
+
+st.markdown("""
+<style>
+
+.stApp{
+    background-color:#f4f6fb;
+}
+
+/* title */
+.title{
+    text-align:center;
+    font-size:42px;
+    font-weight:700;
+    color:#1f3b73;
+    margin-bottom:20px;
+}
+
+/* chat container */
+.chat-card{
+    background:white;
+    border-radius:20px;
+    padding:30px;
+    box-shadow:0 10px 25px rgba(0,0,0,0.08);
+}
+
+/* user bubble */
+.user-bubble{
+    background:#2f63b5;
+    color:white;
+    padding:14px 18px;
+    border-radius:14px;
+    margin:10px 0;
+    width:70%;
+    margin-left:auto;
+    font-size:16px;
+}
+
+/* bot bubble */
+.bot-bubble{
+    background:#d9d9de;
+    color:black;
+    padding:14px 18px;
+    border-radius:14px;
+    margin:10px 0;
+    width:70%;
+    font-size:16px;
+}
+
+/* mic center */
+.mic-container{
+    display:flex;
+    justify-content:center;
+    margin-top:30px;
+}
+
+</style>
+""", unsafe_allow_html=True)
+
+
+# -------------------------
+# Title
+# -------------------------
+
+st.markdown('<div class="title">Just Talk</div>', unsafe_allow_html=True)
+
+st.markdown('<div class="chat-card">', unsafe_allow_html=True)
+
 
 # -------------------------
 # Session state
@@ -33,25 +111,36 @@ script_user = [
     "แผงโซลาร์ ถ้าในเซลล์ก็คือ คลอโรพลาสต์ ใช่ไหม แต่ถ้าสัตว์ไม่มีคลอโรพลาสต์ แล้วสัตว์เอาพลังงานจากไหนมาขยายขนาดร่างกายล่ะ",
     "ต้องเป็นผนังเซลล์แน่เลย แล้วถ้าสัตว์มีผนังเซลล์บ้างล่ะ มันจะช่วยให้เราแข็งแกร่งขึ้นไหม",
     "ไม่ไหวแน่ ขยับตัวลำบาก วิ่งไปหาทรัพยากรใหม่ๆ ไม่ได้ สรุปคือพืชยอมแข็งเพื่อผลิตเอง ส่วนสัตว์เลือกยืดหยุ่นเพื่อออกไปหาของกิน แบบนี้ถูกมั้ย",
-    "ก็คงตั้งตรงไม่ได้ แล้วถล่มลงมาเพราะรับน้ำหนักตัวเองไม่ไหว ชัดเจนเลย พอเห็นตรรกะเบื้องหลังแต่ละส่วนแบบนี้ ก็ไม่ต้องท่องจำแบบเดิมๆ แล้ว",
-    "เราว่ามันคงแปลกมาก เพราะถ้ามันมีคลอโรพลาสต์แต่วิ่งเร็วด้วย มันน่าจะเป็นระบบที่ใช้พลังงานสูงมากจนแผงโซลาร์ผลิตให้ไม่ทันแน่ๆ หรือไม่มันก็ต้องแลกด้วยการไม่มีผนังเซลล์ที่แข็งแรงเพื่อให้ยังขยับตัวได้"
+    "ก็คงตั้งตรงไม่ได้ แล้วถล่มลงมาเพราะรับน้ำหนักตัวเองไม่ไหว",
+    "เราว่ามันคงแปลกมาก เพราะถ้ามันมีคลอโรพลาสต์แต่วิ่งเร็วด้วย มันน่าจะเป็นระบบที่ใช้พลังงานสูงมาก"
 ]
 
 script_bot = [
     "เพราะมัวแต่จำชื่อหรือเปล่าอี้ ลองใช้แนวคิดแบบการสร้างธุรกิจดูนะ ถ้าพืชเป็นโรงงานที่ย้ายไปไหนไม่ได้เลย มันต้องมีอุปกรณ์ตัวไหนไว้ดึงพลังงานจากแดดมาสร้างอาหารเอง",
-    "เป็นคำถามที่ดี ในเมื่อสัตว์ไม่มีเครื่องผลิตพลังงานในตัว สัตว์เลยต้องใช้ระบบนำเข้า หรือการกินสิ่งมีชีวิตอื่นเข้าไปแทน ทีนี้ย้อนกลับมาที่พืช ถ้าโรงงานนี้ไม่มีกระดูกคอยพยุง อี้คิดว่ามันต้องมีโครงสร้างกำแพงแบบไหนเพื่อให้ลำต้นตั้งตรงท้าลมท้าฝนได้",
-    "แข็งแกร่งขึ้นแน่ แต่มันจะติดปัญหาใหญ่เรื่องความคล่องตัว อี้ลองนึกดูนะ ถ้าเราจะสร้างบริษัทที่ต้องวิ่งหาลูกค้าตลอดเวลา แต่เราดันสร้างกำแพงคอนกรีตหนาๆ หุ้มพนักงานทุกคนไว้ ระบบมันจะยังเคลื่อนไหวไหวไหม",
-    "ถูกแล้วอี้ เพราะมีผนังเซลล์ เซลล์พืชเลยเป็นเหลี่ยมแข็งแรง ส่วนเซลล์สัตว์จะมนและยืดหยุ่นกว่า ทีนี้ถ้าพืชสร้างผนังเซลล์ไม่ได้ ระบบโรงงานนี้จะพังยังไง",
-    "ดีมากอี้ ถ้างั้นก่อนแยกย้ายกันไป ลองทดสอบความเข้าใจสั้นๆ หน่อยนะ ถ้าเราค้นพบสิ่งมีชีวิตชนิดใหม่ที่เคลื่อนที่ได้รวดเร็วมาก แต่อี้ส่องกล้องลงไปแล้วดันเจอ คลอโรพลาสต์ อยู่ข้างในเซลล์ด้วย อี้จะวิเคราะห์ว่าระบบของมันมีปัญหาหรือความพิเศษยังไง",
-    "วิเคราะห์ได้ขาดมากอี้! สรุปสั้นๆ วันนี้ที่เราคุยกันคือ พืชเน้นระบบพึ่งพาตัวเองด้วย คลอโรพลาสต์ และกำแพงที่แข็งแรงอย่าง ผนังเซลล์ ส่วนสัตว์เน้นความยืดหยุ่นและระบบนำเข้าพลังงานเพื่อให้ขยายตัวและเคลื่อนที่ได้คล่องตัว พอเข้าใจเหตุและผลของโครงสร้างแบบนี้ อี้ก็จะมองเห็นภาพรวมของระบบสิ่งมีชีวิตได้ชัดเจนขึ้นเยอะเลย"
+    "เป็นคำถามที่ดี ในเมื่อสัตว์ไม่มีเครื่องผลิตพลังงานในตัว สัตว์เลยต้องใช้ระบบนำเข้า หรือการกินสิ่งมีชีวิตอื่นเข้าไปแทน",
+    "แข็งแกร่งขึ้นแน่ แต่มันจะติดปัญหาใหญ่เรื่องความคล่องตัว",
+    "ถูกแล้วอี้ เพราะมีผนังเซลล์ เซลล์พืชเลยเป็นเหลี่ยมแข็งแรง ส่วนเซลล์สัตว์จะมนและยืดหยุ่นกว่า",
+    "ดีมากอี้ ถ้างั้นก่อนแยกย้ายกันไป ลองทดสอบความเข้าใจสั้นๆ หน่อยนะ",
+    "วิเคราะห์ได้ขาดมากอี้! สรุปสั้นๆ วันนี้ที่เราคุยกันคือ พืชเน้นระบบพึ่งพาตัวเองด้วยคลอโรพลาสต์ และผนังเซลล์ ส่วนสัตว์เน้นความยืดหยุ่นและการเคลื่อนที่"
 ]
+
 
 # -------------------------
 # Display chat
 # -------------------------
 
 for msg in st.session_state.chat_history:
-    st.chat_message(msg["role"]).write(msg["content"])
+
+    if msg["role"] == "user":
+        st.markdown(
+            f'<div class="user-bubble">{msg["content"]}</div>',
+            unsafe_allow_html=True
+        )
+    else:
+        st.markdown(
+            f'<div class="bot-bubble">{msg["content"]}</div>',
+            unsafe_allow_html=True
+        )
 
 
 # -------------------------
@@ -63,38 +152,46 @@ if st.session_state.last_audio:
     st.session_state.last_audio = None
 
 
+st.markdown('</div>', unsafe_allow_html=True)
+
+
 # -------------------------
-# Voice input
+# Mic button
 # -------------------------
 
+st.markdown('<div class="mic-container">', unsafe_allow_html=True)
+
 audio = mic_recorder(
-    start_prompt="🎤 กดเพื่อพูด",
-    stop_prompt="⏹️ หยุด",
+    start_prompt="🎤",
+    stop_prompt="⏹️",
     key=f"mic_{st.session_state.mic_key}"
 )
 
+st.markdown('</div>', unsafe_allow_html=True)
+
+
+# -------------------------
+# Logic
+# -------------------------
+
 if audio and "bytes" in audio:
 
-    # รับเสียง (ใช้แค่ trigger)
     user_text = speech_to_text(audio["bytes"])
 
     if st.session_state.step < len(script_user):
 
-        # user จาก script
         user_script = script_user[st.session_state.step]
 
         st.session_state.chat_history.append(
             {"role": "user", "content": user_script}
         )
 
-        # bot จาก script
         bot_script = script_bot[st.session_state.step]
 
         st.session_state.chat_history.append(
             {"role": "assistant", "content": bot_script}
         )
 
-        # เสียง bot
         st.session_state.last_audio = text_to_speech(bot_script)
 
         st.session_state.step += 1
